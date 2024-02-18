@@ -1,0 +1,33 @@
+İstanbul'un Kıyısında Bir Yat,Adalet Ağaoğlu,1973, 232
+Osmancık,Tarık Buğra,1946,196
+Son Ada,Adalet Ağaoğlu,1976,260
+Telli Kavak,Yaşar Kemal,1955,108
+Tutunamayanlar,Oğuz Atay,1971,476
+Yaz Yağmuru,Güner Sümer,1977,192
+Cemile,Cemil Meriç,1943,186
+Kendine Ait Bir Oda,Virginia Woolf,1929,104
+Köprü,Ahmet Hamdi Tanpınar,1952,352
+Nemesis,İlhan İrem,2007,256
+Sokakta, Yusuf Atılgan,1972,192
+Yorgun Savaşçı,Halide Edib Adıvar,1928,264
+Dokuzuncu Hariciye Koğuşu,Peyami Safa,1949,206
+İnsan Neyle Yaşar?,Lev Tolstoy,1886,96
+İstanbul'un Kıyısında Bir Yat,Adalet Ağaoğlu, 1973,232
+Osmancık,Tarık Buğra,1946,196
+Son Ada,Adalet Ağaoğlu,1976,260
+Telli Kavak,Yaşar Kemal,1955,108
+Tutunamayanlar,Oğuz Atay,1971,476
+Yaz Yağmuru,Güner Sümer,1977,192
+Cemile,Cemil Meriç,1943,186
+Kendine Ait Bir Oda,Virginia Woolf,1929,104
+Köprü,Ahmet Hamdi Tanpınar,1952,352 
+Nemesis,İlhan İrem,2007,256
+Sokakta,Yusuf Atılgan,1972,192
+Yorgun Savaşçı,Halide Edib Adıvar,1928,264
+Kuyucaklı Yusuf,Sabahattin Ali,1937,224
+Tutunamayanlar,Oğuz Atay,1971,476
+Sokaktaki Adam,Sevgi Soysal,1976,264
+Huzur Sokağı,Aziz Nesin,1952,127
+Gülümsün Aslanım,Şebnem İşigüzel,2018,224
+Tutunamayanlar,Oğuz Atay,1971,476
+İstanbul Hatırası,Ahmet Ümit,2002,523
