@@ -12,7 +12,7 @@ import seaborn as sns
 import matplotlib.pyplot as plt
 import numpy as np
 
-file_path = "/content/turkey_earthquakes(1915-2023_may).csv"
+file_path = "turkey_earthquakes(1915-2023_may).csv"
 
 try:
     df = pd.read_csv(file_path, encoding='ISO-8859-1')
