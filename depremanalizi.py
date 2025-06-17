@@ -246,8 +246,6 @@ from xgboost import XGBClassifier
 from lightgbm import LGBMClassifier
 from sklearn.metrics import classification_report, accuracy_score
 
-!pip install xgboost lightgbm
-
 def modeli_test_et(model, X_train, y_train, X_test, y_test, model_adi):
     model.fit(X_train, y_train)
     y_pred = model.predict(X_test)
