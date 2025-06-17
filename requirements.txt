@@ -1,8 +1,8 @@
 streamlit
 pandas
 numpy
+geopy
 matplotlib
-seaborn
 scikit-learn
 xgboost
-lightgbm
+seaborn
