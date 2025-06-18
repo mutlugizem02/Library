@@ -1,11 +1,11 @@
+scikit-learn>=1.2,<1.3
+imblearn>=0.10.1
 pandas
 numpy
-scikit-learn
 seaborn
 matplotlib
 streamlit
 geopy
 xgboost
 lightgbm
-imblearn
 joblib
