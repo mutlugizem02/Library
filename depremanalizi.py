@@ -171,7 +171,8 @@ df['is_aftershock'] = 0
 
                 if distance <= distance_km and df.loc[j, 'Büyüklük'] < row['Büyüklük']:
                     df.at[j, 'is_aftershock'] = 1
-    return df
+                    
+                return df
 
 df = label_aftershocks(df)
 df['is_aftershock'].value_counts()
@@ -199,7 +200,6 @@ def label_aftershocks(df, mainshock_mag_threshold=6.0, time_window_days=7, dista
                     df.at[j, 'is_aftershock'] = 1
 
     return df
-
 
 df = ozellikleri_olustur(df)
 df[['Büyüklük', 'Derinlik', 'Saat', 'Haftanın Günü', 'Önceki Zaman Farkı (sn)', 'Önceki Mesafe (km)']].head()
@@ -382,4 +382,3 @@ for thresh in [0.5, 0.4, 0.35, 0.3]:
     y_pred_thresh = (y_proba >= thresh).astype(int)
     print(classification_report(y_test, y_pred_thresh, target_names=["Artçı Değil", "Artçı"]))
     print("Confusion Matrix:\n", confusion_matrix(y_test, y_pred_thresh))
-
