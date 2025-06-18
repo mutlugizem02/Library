@@ -110,6 +110,29 @@ for isim, model in modeller.items():
     y_pred = model.predict(X_test)
     print(accuracy_score(y_test, y_pred))
 
+
+df_cleaned = df.dropna(subset=ozellikler + ['is_aftershock']).copy()
+X = df_cleaned[ozellikler]
+y = df_cleaned['is_aftershock']
+
+
+print("Tip kontrolü:\n", X.dtypes)
+
+print("Eksik veri kontrolü:\n", X.isnull().sum())
+
+
+X_train, X_test, y_train, y_test = train_test_split(X, y, stratify=y, test_size=0.2, random_state=42)
+
+X_train = X_train.dropna().reset_index(drop=True)
+y_train = y_train.loc[X_train.index].reset_index(drop=True)
+
+X_train = X_train.astype(float)
+y_train = y_train.astype(int)
+
+smote = SMOTE(random_state=42)
+X_train_resampled, y_train_resampled = smote.fit_resample(X_train, y_train)
+
+
 df_cleaned = df.dropna(subset=ozellikler + ['is_aftershock']).copy()
 X = df_cleaned[ozellikler]
 y = df_cleaned['is_aftershock']
