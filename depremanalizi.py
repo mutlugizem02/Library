@@ -88,8 +88,11 @@ X = df_cleaned[ozellikler]
 y = df_cleaned['is_aftershock']
 
 X_train, X_test, y_train, y_test = train_test_split(X, y, stratify=y, test_size=0.2, random_state=42)
-X_train = X_train.dropna().reset_index(drop=True)
-y_train = y_train.loc[X_train.index].reset_index(drop=True)
+
+train_index = X_train.dropna().index
+X_train = X_train.loc[train_index].reset_index(drop=True)
+y_train = y_train.loc[train_index].reset_index(drop=True)
+
 X_train = X_train.astype(float)
 y_train = y_train.astype(int)
 
