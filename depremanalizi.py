@@ -177,10 +177,11 @@ df = label_aftershocks(df)
 df['is_aftershock'].value_counts()
 
 from geopy.distance import geodesic
+import pandas as pd
 
 def label_aftershocks(df, mainshock_mag_threshold=6.0, time_window_days=7, distance_km=50):
     df = df.sort_values("Oluş Zamanı").reset_index(drop=True)
-    df['is_aftershock'] = 0  # düzgün girintili
+    df['is_aftershock'] = 0
 
     for i, row in df.iterrows():
         if row['Büyüklük'] >= mainshock_mag_threshold:
@@ -198,6 +199,7 @@ def label_aftershocks(df, mainshock_mag_threshold=6.0, time_window_days=7, dista
                     df.at[j, 'is_aftershock'] = 1
 
     return df
+
 
 df = ozellikleri_olustur(df)
 df[['Büyüklük', 'Derinlik', 'Saat', 'Haftanın Günü', 'Önceki Zaman Farkı (sn)', 'Önceki Mesafe (km)']].head()
