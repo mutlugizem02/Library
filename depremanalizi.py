@@ -2,44 +2,44 @@ import pandas as pd
 import numpy as np
 import seaborn as sns
 import matplotlib.pyplot as plt
-from sklearn.ensemble import RandomForestRegressor
-from sklearn.model_selection import train_test_split
+from sklearn.ensemble import RandomForestRegressor, RandomForestClassifier
+from sklearn.model_selection import train_test_split, GridSearchCV
 from sklearn.preprocessing import StandardScaler
 import streamlit as st
 from geopy.distance import geodesic
-from sklearn.ensemble import RandomForestClassifier
 from sklearn.linear_model import LogisticRegression
 from sklearn.neighbors import KNeighborsClassifier
 from lightgbm import LGBMClassifier
 from xgboost import XGBClassifier
 from sklearn.metrics import classification_report, confusion_matrix, accuracy_score
-from sklearn.model_selection import GridSearchCV
 from imblearn.over_sampling import SMOTE
 import joblib
 
 file_path = "turkey_earthquakes(1915-2023_may).csv"
+
 df = pd.read_csv(file_path, encoding='ISO-8859-1')
 
 features = ['xM', 'MD', 'ML', 'Mb', 'Ms']
 train_df = df[df['Mw'].notnull()]
-X_train = train_df[features]
-y_train = train_df['Mw']
+X_train_mw = train_df[features]
+y_train_mw = train_df['Mw']
 test_df = df[df['Mw'].isnull()]
-X_test = test_df[features]
-X_train = X_train.dropna()
-y_train = y_train.loc[X_train.index]
-X_test = X_test.dropna()
-model = RandomForestRegressor(n_estimators=100, random_state=42)
-model.fit(X_train, y_train)
-predicted_mw = model.predict(X_test)
-df.loc[X_test.index, 'Mw'] = predicted_mw
+X_test_mw = test_df[features]
+X_train_mw = X_train_mw.dropna()
+y_train_mw = y_train_mw.loc[X_train_mw.index]
+X_test_mw = X_test_mw.dropna()
+model_mw = RandomForestRegressor(n_estimators=100, random_state=42)
+model_mw.fit(X_train_mw, y_train_mw)
+predicted_mw = model_mw.predict(X_test_mw)
+df.loc[X_test_mw.index, 'Mw'] = predicted_mw
+
 df['Mw_is_imputed'] = df['Mw'].isnull().astype(int)
 df['Olus tarihi'] = pd.to_datetime(df['Olus tarihi'])
 df = df[['Olus tarihi', 'Olus zamani', 'Enlem', 'Boylam', 'Derinlik', 'Mw', 'ML', 'xM', 'Tip', 'Yer']]
 df['Büyüklük'] = df['Mw'].fillna(df['ML']).fillna(df['xM'])
-df['Timestamp'] = pd.to_datetime(df['Olus tarihi'].astype(str) + ' ' + df['Olus zamani'].astype(str))
+df['Oluş Zamanı'] = pd.to_datetime(df['Olus tarihi'].astype(str) + ' ' + df['Olus zamani'].astype(str))
 df.drop(['Olus tarihi', 'Olus zamani', 'Mw', 'ML', 'xM'], axis=1, inplace=True)
-df = df.rename(columns={'Timestamp': 'Oluş Zamanı'})
+
 df['Log_Büyüklük'] = np.log10(df['Büyüklük'] + 0.1)
 scaler = StandardScaler()
 df['Log_Büyüklük_Std'] = scaler.fit_transform(df[['Log_Büyüklük']])
@@ -83,15 +83,17 @@ def ozellikleri_olustur(df):
 df = ozellikleri_olustur(df)
 
 ozellikler = ['Büyüklük', 'Derinlik', 'Saat', 'Haftanın Günü', 'Önceki Zaman Farkı (sn)', 'Önceki Mesafe (km)']
-df_cleaned = df.dropna(subset=ozellikler + ['is_aftershock']).copy()
+
+df_cleaned = df.dropna(subset=ozellikler + ['is_aftershock']).reset_index(drop=True).copy()
 X = df_cleaned[ozellikler]
 y = df_cleaned['is_aftershock']
 
 X_train, X_test, y_train, y_test = train_test_split(X, y, stratify=y, test_size=0.2, random_state=42)
 
-train_index = X_train.dropna().index
-X_train = X_train.loc[train_index].reset_index(drop=True)
-y_train = y_train.loc[train_index].reset_index(drop=True)
+
+train_df = pd.concat([X_train, y_train], axis=1).dropna().reset_index(drop=True)
+X_train = train_df[ozellikler]
+y_train = train_df['is_aftershock']
 
 X_train = X_train.astype(float)
 y_train = y_train.astype(int)
@@ -101,6 +103,7 @@ X_train_resampled, y_train_resampled = smote.fit_resample(X_train, y_train)
 
 xgb = XGBClassifier(use_label_encoder=False, eval_metric='logloss', random_state=42)
 xgb.fit(X_train_resampled, y_train_resampled)
+
 y_pred = xgb.predict(X_test)
 
 param_grid = {
@@ -115,6 +118,7 @@ xgb_model = XGBClassifier(use_label_encoder=False, eval_metric='logloss', random
 grid = GridSearchCV(estimator=xgb_model, param_grid=param_grid, scoring='f1', cv=3, n_jobs=-1, verbose=1)
 grid.fit(X_train_resampled, y_train_resampled)
 best_xgb = grid.best_estimator_
+
 y_pred_best = best_xgb.predict(X_test)
 y_proba = best_xgb.predict_proba(X_test)[:, 1]
 
