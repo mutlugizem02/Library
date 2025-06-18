@@ -178,27 +178,24 @@ df['is_aftershock'].value_counts()
 
 from geopy.distance import geodesic
 
-def ozellikleri_olustur(df):
+def label_aftershocks(df, mainshock_mag_threshold=6.0, time_window_days=7, distance_km=50):
     df = df.sort_values("Oluş Zamanı").reset_index(drop=True)
+    df['is_aftershock'] = 0  # düzgün girintili
 
-    df['Unix Zamanı'] = df['Oluş Zamanı'].astype(np.int64) // 10**9
-    df['Saat'] = df['Oluş Zamanı'].dt.hour
-    df['Haftanın Günü'] = df['Oluş Zamanı'].dt.dayofweek
+    for i, row in df.iterrows():
+        if row['Büyüklük'] >= mainshock_mag_threshold:
+            mainshock_time = row['Oluş Zamanı']
+            mainshock_loc = (row['Enlem'], row['Boylam'])
 
-    zaman_farki = [0]
-    mesafe_farki = [0]
+            time_window = (df['Oluş Zamanı'] > mainshock_time) & \
+                          (df['Oluş Zamanı'] <= mainshock_time + pd.Timedelta(days=time_window_days))
 
-    for i in range(1, len(df)):
-        simdi_zaman = df.loc[i, 'Oluş Zamanı']
-        onceki_zaman = df.loc[i-1, 'Oluş Zamanı']
-        zaman_farki.append((simdi_zaman - onceki_zaman).total_seconds())
+            for j in df[time_window].index:
+                aftershock_loc = (df.loc[j, 'Enlem'], df.loc[j, 'Boylam'])
+                distance = geodesic(mainshock_loc, aftershock_loc).km
 
-        simdi_konum = (df.loc[i, 'Enlem'], df.loc[i, 'Boylam'])
-        onceki_konum = (df.loc[i-1, 'Enlem'], df.loc[i-1, 'Boylam'])
-        mesafe_farki.append(geodesic(simdi_konum, onceki_konum).km)
-
-    df['Önceki Zaman Farkı (sn)'] = zaman_farki
-    df['Önceki Mesafe (km)'] = mesafe_farki
+                if distance <= distance_km and df.loc[j, 'Büyüklük'] < row['Büyüklük']:
+                    df.at[j, 'is_aftershock'] = 1
 
     return df
 
