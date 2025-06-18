@@ -155,7 +155,7 @@ axes[2].set_yscale('log')
 axes[2].set_title('Kümülatif Dağılım (Log-Log)')
 
 st.pyplot(fig)
-df['is_aftershock'] = 0 
+    df['is_aftershock'] = 0 
 
     for i, row in df.iterrows():
         if row['Büyüklük'] >= mainshock_mag_threshold:
