@@ -23,16 +23,6 @@ def load_data():
     try:
         df = pd.read_csv("deprem_verisi.csv", encoding='utf-8-sig')
     except:
-        # Örnek veri oluştur (gerçek uygulamada bu kısmı kaldırın)
-        data = {
-            'Oluş Zamanı': pd.date_range(start='1915-01-01', periods=1000, freq='D'),
-            'Enlem': np.random.uniform(36, 42, 1000),
-            'Boylam': np.random.uniform(26, 45, 1000),
-            'Derinlik': np.random.uniform(0, 100, 1000),
-            'Büyüklük': np.random.uniform(2, 8, 1000),
-            'Tip': np.random.choice(['Artçı', 'Öncü', 'Ana'], 1000),
-            'Yer': np.random.choice(['İstanbul', 'İzmir', 'Ankara', 'Van'], 1000)
-        }
         df = pd.DataFrame(data)
         df['Log_Büyüklük'] = np.log10(df['Büyüklük'] + 0.1)
     return df
