@@ -138,16 +138,23 @@ plt.subplot(1, 3, 2)
 sns.violinplot(x=df['Log_Büyüklük'], color='lightgreen')
 plt.title('Log10 Dönüşümlü Dağılım')
 
-plt.subplot(1, 3, 3)
-sns.ecdfplot(data=df, x='Büyüklük', complementary=True)
-plt.yscale('log')
-plt.title('Kümülatif Dağılım (Log-Log)')
-plt.tight_layout()
+import matplotlib.pyplot as plt
+import seaborn as sns
+import streamlit as st
 
-from geopy.distance import geodesic
+fig, axes = plt.subplots(1, 3, figsize=(18, 5))
 
-def label_aftershocks(df, mainshock_mag_threshold=6.0, time_window_days=7, distance_km=50):
-    df = df.sort_values("Oluş Zamanı").reset_index(drop=True)
+sns.histplot(data=df, x='Büyüklük', ax=axes[0])
+axes[0].set_title('Histogram')
+
+sns.boxplot(data=df, x='Büyüklük', ax=axes[1])
+axes[1].set_title('Boxplot')
+
+sns.ecdfplot(data=df, x='Büyüklük', complementary=True, ax=axes[2])
+axes[2].set_yscale('log')
+axes[2].set_title('Kümülatif Dağılım (Log-Log)')
+
+st.pyplot(fig)
     df['is_aftershock'] = 0 
 
     for i, row in df.iterrows():
