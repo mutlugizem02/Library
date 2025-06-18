@@ -119,6 +119,8 @@ X_train, X_test, y_train, y_test = train_test_split(X, y, stratify=y, test_size=
 X_train = X_train.dropna().reset_index(drop=True)
 y_train = y_train.loc[X_train.index].reset_index(drop=True)
 
+X_train = X_train.astype(float)
+
 smote = SMOTE(random_state=42)
 X_train_resampled, y_train_resampled = smote.fit_resample(X_train, y_train)
 
