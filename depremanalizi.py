@@ -15,9 +15,10 @@ from sklearn.metrics import classification_report, confusion_matrix, accuracy_sc
 from imblearn.over_sampling import SMOTE
 import joblib
 
-file_path = "turkey_earthquakes(1915-2023_may).csv"
 
+file_path = "turkey_earthquakes(1915-2023_may).csv"
 df = pd.read_csv(file_path, encoding='ISO-8859-1')
+
 
 features = ['xM', 'MD', 'ML', 'Mb', 'Ms']
 train_df = df[df['Mw'].notnull()]
@@ -33,12 +34,14 @@ model_mw.fit(X_train_mw, y_train_mw)
 predicted_mw = model_mw.predict(X_test_mw)
 df.loc[X_test_mw.index, 'Mw'] = predicted_mw
 
+
 df['Mw_is_imputed'] = df['Mw'].isnull().astype(int)
 df['Olus tarihi'] = pd.to_datetime(df['Olus tarihi'])
 df = df[['Olus tarihi', 'Olus zamani', 'Enlem', 'Boylam', 'Derinlik', 'Mw', 'ML', 'xM', 'Tip', 'Yer']]
 df['Büyüklük'] = df['Mw'].fillna(df['ML']).fillna(df['xM'])
 df['Oluş Zamanı'] = pd.to_datetime(df['Olus tarihi'].astype(str) + ' ' + df['Olus zamani'].astype(str))
 df.drop(['Olus tarihi', 'Olus zamani', 'Mw', 'ML', 'xM'], axis=1, inplace=True)
+
 
 df['Log_Büyüklük'] = np.log10(df['Büyüklük'] + 0.1)
 scaler = StandardScaler()
@@ -82,29 +85,58 @@ def ozellikleri_olustur(df):
 
 df = ozellikleri_olustur(df)
 
+
 ozellikler = ['Büyüklük', 'Derinlik', 'Saat', 'Haftanın Günü', 'Önceki Zaman Farkı (sn)', 'Önceki Mesafe (km)']
 
+
 df_cleaned = df.dropna(subset=ozellikler + ['is_aftershock']).reset_index(drop=True).copy()
+df_cleaned = df_cleaned[ozellikler + ['is_aftershock']].dropna().reset_index(drop=True)
+
+
+for col in ozellikler:
+    df_cleaned[col] = pd.to_numeric(df_cleaned[col], errors='coerce')
+    
+df_cleaned = df_cleaned.dropna().reset_index(drop=True)
+
 X = df_cleaned[ozellikler]
 y = df_cleaned['is_aftershock']
+
+
+print("Class distribution before resampling:")
+print(y.value_counts())
+
 
 X_train, X_test, y_train, y_test = train_test_split(X, y, stratify=y, test_size=0.2, random_state=42)
 
 
-train_df = pd.concat([X_train, y_train], axis=1).dropna().reset_index(drop=True)
-X_train = train_df[ozellikler]
-y_train = train_df['is_aftershock']
+scaler = StandardScaler()
+X_train_scaled = scaler.fit_transform(X_train)
+X_test_scaled = scaler.transform(X_test)
 
-X_train = X_train.astype(float)
-y_train = y_train.astype(int)
 
-smote = SMOTE(random_state=42)
-X_train_resampled, y_train_resampled = smote.fit_resample(X_train, y_train)
+X_train_scaled = pd.DataFrame(X_train_scaled, columns=ozellikler, index=X_train.index)
+X_test_scaled = pd.DataFrame(X_test_scaled, columns=ozellikler, index=X_test.index)
+
+
+try:
+    smote = SMOTE(random_state=42)
+    X_train_resampled, y_train_resampled = smote.fit_resample(X_train_scaled, y_train)
+    print("\nClass distribution after SMOTE:")
+    print(pd.Series(y_train_resampled).value_counts())
+except Exception as e:
+    st.error(f"SMOTE failed: {str(e)}")
+   
+    from imblearn.over_sampling import RandomOverSampler
+    ros = RandomOverSampler(random_state=42)
+    X_train_resampled, y_train_resampled = ros.fit_resample(X_train_scaled, y_train)
+    st.warning("Used RandomOverSampler as fallback")
+
 
 xgb = XGBClassifier(use_label_encoder=False, eval_metric='logloss', random_state=42)
 xgb.fit(X_train_resampled, y_train_resampled)
 
-y_pred = xgb.predict(X_test)
+y_pred = xgb.predict(X_test_scaled)
+
 
 param_grid = {
     'n_estimators': [100, 200],
@@ -119,9 +151,12 @@ grid = GridSearchCV(estimator=xgb_model, param_grid=param_grid, scoring='f1', cv
 grid.fit(X_train_resampled, y_train_resampled)
 best_xgb = grid.best_estimator_
 
-y_pred_best = best_xgb.predict(X_test)
-y_proba = best_xgb.predict_proba(X_test)[:, 1]
+y_pred_best = best_xgb.predict(X_test_scaled)
+y_proba = best_xgb.predict_proba(X_test_scaled)[:, 1]
+
 
 for thresh in [0.5, 0.4, 0.35, 0.3]:
     y_pred_thresh = (y_proba >= thresh).astype(int)
-    print(confusion_matrix(y_test, y_pred_thresh))
+    st.write(f"Threshold: {thresh}")
+    st.write(confusion_matrix(y_test, y_pred_thresh))
+    st.write(classification_report(y_test, y_pred_thresh))
