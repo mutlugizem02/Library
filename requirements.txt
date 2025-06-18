@@ -1,9 +1,11 @@
 streamlit
 pandas
 numpy
-geopy
 matplotlib
-scikit-learn
-xgboost
 seaborn
+scikit-learn
 imbalanced-learn
+geopy
+xgboost
+lightgbm
+joblib
