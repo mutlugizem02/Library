@@ -87,10 +87,16 @@ df = ozellikleri_olustur(df)
 ozellikler = ['Büyüklük', 'Derinlik', 'Saat', 'Haftanın Günü', 'Önceki Zaman Farkı (sn)', 'Önceki Mesafe (km)']
 X = df[ozellikler]
 y = df['is_aftershock']
+
 X_train, X_test, y_train, y_test = train_test_split(X, y, stratify=y, test_size=0.2, random_state=42)
+
+X_train = X_train.dropna()
+y_train = y_train.loc[X_train.index]
+
 model = RandomForestClassifier(random_state=42, class_weight='balanced')
 model.fit(X_train, y_train)
 y_pred = model.predict(X_test)
+
 modeller = {
     "Random Forest": RandomForestClassifier(random_state=42, class_weight='balanced'),
     "Logistic Regression": LogisticRegression(max_iter=1000, class_weight='balanced'),
@@ -98,6 +104,7 @@ modeller = {
     "XGBoost": XGBClassifier(random_state=42, scale_pos_weight=12),
     "LightGBM": LGBMClassifier(random_state=42, class_weight='balanced')
 }
+
 for isim, model in modeller.items():
     model.fit(X_train, y_train)
     y_pred = model.predict(X_test)
@@ -107,11 +114,17 @@ df_cleaned = df.dropna(subset=ozellikler + ['is_aftershock']).copy()
 X = df_cleaned[ozellikler]
 y = df_cleaned['is_aftershock']
 X_train, X_test, y_train, y_test = train_test_split(X, y, stratify=y, test_size=0.2, random_state=42)
+
+X_train = X_train.dropna()
+y_train = y_train.loc[X_train.index]
+
 smote = SMOTE(random_state=42)
 X_train_resampled, y_train_resampled = smote.fit_resample(X_train, y_train)
+
 xgb = XGBClassifier(use_label_encoder=False, eval_metric='logloss', random_state=42)
 xgb.fit(X_train_resampled, y_train_resampled)
 y_pred = xgb.predict(X_test)
+
 param_grid = {
     'n_estimators': [100, 200],
     'max_depth': [3, 5, 7],
@@ -123,8 +136,10 @@ param_grid = {
 xgb_model = XGBClassifier(use_label_encoder=False, eval_metric='logloss', random_state=42)
 grid = GridSearchCV(estimator=xgb_model, param_grid=param_grid, scoring='f1', cv=3, n_jobs=-1, verbose=1)
 grid.fit(X_train_resampled, y_train_resampled)
+
 best_xgb = grid.best_estimator_
 y_pred_best = best_xgb.predict(X_test)
+
 y_proba = best_xgb.predict_proba(X_test)[:, 1]
 for thresh in [0.5, 0.4, 0.35, 0.3]:
     y_pred_thresh = (y_proba >= thresh).astype(int)
