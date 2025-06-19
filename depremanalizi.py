@@ -119,21 +119,10 @@ def main():
     scaler = StandardScaler()
     X_train_scaled = scaler.fit_transform(X_train)
     X_test_scaled = scaler.transform(X_test)
-    
- 
-    # Örnekleme işlemi (şimdilik devre dışı bırakıldı)
-    # try:
-    #     ros = RandomOverSampler(random_state=42)
-    #     X_train_resampled, y_train_resampled = ros.fit_resample(X_train_scaled, y_train)
-    #     st.info("Veri örnekleme başarıyla uygulandı.")
-    # except Exception as e:
-    #     st.warning(f"Örnekleme hatası: {str(e)} - Örnekleme yapılmadan devam ediliyor...")
-    #     X_train_resampled, y_train_resampled = X_train_scaled, y_train
 
     # Geçici çözüm: örnekleme yapılmadan devam
     X_train_resampled, y_train_resampled = X_train_scaled, y_train
 
-    
     st.subheader("🤖 Model Eğitimi")
     with st.spinner('XGBoost modeli eğitiliyor...'):
         xgb = XGBClassifier(
@@ -146,15 +135,23 @@ def main():
         )
         xgb.fit(X_train_resampled, y_train_resampled)
         st.success("Model başarıyla eğitildi!")
-    
-    
+
+    from sklearn.metrics import (
+        classification_report,
+        confusion_matrix,
+        roc_curve,
+        auc,
+        precision_score,
+        recall_score,
+        f1_score
+    )
+
     st.subheader("📊 Model Performansı")
     threshold = st.slider('Sınıflandırma Eşik Değeri', 0.1, 0.9, 0.5, 0.05)
     y_proba = xgb.predict_proba(X_test_scaled)[:, 1]
     y_pred = (y_proba >= threshold).astype(int)
-    
+
     col1, col2 = st.columns(2)
-    
     with col1:
         st.write("### Karışıklık Matrisi")
         cm = confusion_matrix(y_test, y_pred)
@@ -164,8 +161,6 @@ def main():
         st.write("### Sınıflandırma Raporu")
         report = classification_report(y_test, y_pred, output_dict=True)
         st.dataframe(pd.DataFrame(report).transpose())
-
-        from sklearn.metrics import roc_curve, auc, precision_score, recall_score, f1_score
 
     st.subheader("📉 ROC Eğrisi ve AUC Skoru")
     fpr, tpr, thresholds = roc_curve(y_test, y_proba)
@@ -179,10 +174,9 @@ def main():
     ax.set_title('ROC Eğrisi')
     ax.legend(loc='lower right')
     st.pyplot(fig)
-
     st.info(f"Modelin AUC skoru: **{auc_score:.2f}**")
-    st.subheader("⚖️ Eşik Değeri - Performans Metrikleri Grafiği")
 
+    st.subheader("⚖️ Eşik Değeri - Performans Metrikleri Grafiği")
     thresholds_range = np.arange(0.1, 0.9, 0.05)
     precisions, recalls, f1s = [], [], []
 
@@ -201,8 +195,8 @@ def main():
     ax.set_title('Eşik Değerine Göre Performans Metrikleri')
     ax.legend()
     st.pyplot(fig)
-    st.subheader("🧾 Model Sonuç Yorumu")
 
+    st.subheader("🧾 Model Sonuç Yorumu")
     yorum = ""
     if auc_score > 0.85 and f1_score(y_test, y_pred) > 0.7:
         yorum = "Modeliniz genel olarak oldukça başarılı. Artçı şokları ayırt etme kapasitesi yüksek görünüyor."
@@ -210,7 +204,6 @@ def main():
         yorum = "Modeliniz iyi performans gösteriyor ancak sınıflar arasındaki dengesizlik nedeniyle artçı şok tahmini geliştirilebilir."
     else:
         yorum = "Modelinizin performansı düşük. Özellikle artçı şok sınıfı az olduğu için model bu sınıfı iyi öğrenememiş olabilir."
-
     st.info(yorum)
 
     st.subheader("🔍 Özellik Önemleri")
@@ -218,12 +211,12 @@ def main():
         'Özellik': features,
         'Önem': xgb.feature_importances_
     }).sort_values('Önem', ascending=False)
-    
+
     fig, ax = plt.subplots(figsize=(10, 6))
     sns.barplot(data=feat_imp, x='Önem', y='Özellik', ax=ax)
     ax.set_title('XGBoost Özellik Önemleri')
     st.pyplot(fig)
-    
+
     if st.button("💾 Modeli Kaydet"):
         joblib.dump(xgb, 'deprem_modeli.pkl')
         st.success("Model başarıyla kaydedildi!")
