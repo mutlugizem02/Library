@@ -1,4 +1,4 @@
-streamliT
+streamlit
 pandas
 numpy
 matplotlib
@@ -7,5 +7,5 @@ scikit-learn
 imbalanced-learn
 xgboost
 geopy
-joblib>
+joblib
 setuptools
