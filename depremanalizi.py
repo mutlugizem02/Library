@@ -12,10 +12,8 @@ from sklearn.metrics import classification_report, confusion_matrix
 from imblearn.over_sampling import RandomOverSampler
 import joblib
 
-
 st.set_page_config(page_title="Türkiye Deprem Analizi", layout="wide", page_icon="🌍")
 st.title("🌍 Türkiye Deprem Analizi (1915-2023)")
-
 
 @st.cache_data
 def load_data():
@@ -27,9 +25,7 @@ def load_data():
         st.error(f"Veri yüklenirken hata oluştu: {str(e)}")
         return None
 
-
 def preprocess_data(df):
-    
     features = ['xM', 'MD', 'ML', 'Mb', 'Ms']
     train_df = df[df['Mw'].notnull()]
     X_train_mw = train_df[features].dropna()
@@ -43,19 +39,14 @@ def preprocess_data(df):
     predicted_mw = model_mw.predict(X_test_mw)
     df.loc[X_test_mw.index, 'Mw'] = predicted_mw
     
-    
     df['Olus tarihi'] = pd.to_datetime(df['Olus tarihi'])
     df['Büyüklük'] = df['Mw'].fillna(df['ML']).fillna(df['xM'])
     df['Oluş Zamanı'] = pd.to_datetime(df['Olus tarihi'].astype(str) + ' ' + df['Olus zamani'].astype(str))
     
-   
     df = label_aftershocks(df)
-    
-    
     df = create_features(df)
     
     return df
-
 
 def label_aftershocks(df, mainshock_mag_threshold=6.0, time_window_days=7, distance_km=50):
     df = df.sort_values("Oluş Zamanı").reset_index(drop=True)
@@ -73,7 +64,6 @@ def label_aftershocks(df, mainshock_mag_threshold=6.0, time_window_days=7, dista
                     df.at[j, 'is_aftershock'] = 1
     return df
 
-
 def create_features(df):
     df['Saat'] = df['Oluş Zamanı'].dt.hour
     df['Haftanın Günü'] = df['Oluş Zamanı'].dt.dayofweek
@@ -84,7 +74,6 @@ def create_features(df):
                                     for i in range(1, len(df))]
     return df
 
-
 def main():
     df = load_data()
     if df is None:
@@ -93,14 +82,11 @@ def main():
     with st.expander("📊 Ham Veri Önizleme"):
         st.dataframe(df.head())
     
-    
     with st.spinner('Veri işleniyor...'):
         df_processed = preprocess_data(df)
         
-        
         features = ['Büyüklük', 'Derinlik', 'Saat', 'Haftanın Günü', 
                    'Önceki Zaman Farkı (sn)', 'Önceki Mesafe (km)']
-        
         
         df_cleaned = df_processed.dropna(subset=features + ['is_aftershock']).copy()
         for col in features:
@@ -109,7 +95,6 @@ def main():
         
         X = df_cleaned[features]
         y = df_cleaned['is_aftershock']
-    
     
     st.subheader("📈 Veri Analizi")
     col1, col2 = st.columns(2)
@@ -128,7 +113,6 @@ def main():
         ax.set_ylabel('Sayı')
         st.pyplot(fig)
     
-    
     X_train, X_test, y_train, y_test = train_test_split(
         X, y, stratify=y, test_size=0.2, random_state=42)
     
@@ -136,15 +120,15 @@ def main():
     X_train_scaled = scaler.fit_transform(X_train)
     X_test_scaled = scaler.transform(X_test)
     
-    
-    from imblearn.over_sampling import RandomOverSampler
-    ros = RandomOverSampler(random_state=42)
+ 
     try:
-    X_res, y_res = ros.fit_resample(X, y)
-    except AttributeError:
-    print("Örnekleme hatası: Sürüm uyumsuzluğu - Örnekleme yapılmadan devam ediliyor...")
-    X_res, y_res = X, y
-   
+        ros = RandomOverSampler(random_state=42)
+        X_train_resampled, y_train_resampled = ros.fit_resample(X_train_scaled, y_train)
+        st.info("Veri örnekleme başarıyla uygulandı.")
+    except Exception as e:
+        st.warning(f"Örnekleme hatası: {str(e)} - Örnekleme yapılmadan devam ediliyor...")
+        X_train_resampled, y_train_resampled = X_train_scaled, y_train
+    
     st.subheader("🤖 Model Eğitimi")
     with st.spinner('XGBoost modeli eğitiliyor...'):
         xgb = XGBClassifier(
@@ -158,7 +142,7 @@ def main():
         xgb.fit(X_train_resampled, y_train_resampled)
         st.success("Model başarıyla eğitildi!")
     
-    # Model değerlendirme
+    
     st.subheader("📊 Model Performansı")
     threshold = st.slider('Sınıflandırma Eşik Değeri', 0.1, 0.9, 0.5, 0.05)
     y_proba = xgb.predict_proba(X_test_scaled)[:, 1]
@@ -176,7 +160,6 @@ def main():
         report = classification_report(y_test, y_pred, output_dict=True)
         st.dataframe(pd.DataFrame(report).transpose())
     
-    
     st.subheader("🔍 Özellik Önemleri")
     feat_imp = pd.DataFrame({
         'Özellik': features,
@@ -187,7 +170,6 @@ def main():
     sns.barplot(data=feat_imp, x='Önem', y='Özellik', ax=ax)
     ax.set_title('XGBoost Özellik Önemleri')
     st.pyplot(fig)
-    
     
     if st.button("💾 Modeli Kaydet"):
         joblib.dump(xgb, 'deprem_modeli.pkl')
