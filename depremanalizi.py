@@ -164,7 +164,55 @@ def main():
         st.write("### Sınıflandırma Raporu")
         report = classification_report(y_test, y_pred, output_dict=True)
         st.dataframe(pd.DataFrame(report).transpose())
-    
+
+        from sklearn.metrics import roc_curve, auc, precision_score, recall_score, f1_score
+
+    st.subheader("📉 ROC Eğrisi ve AUC Skoru")
+    fpr, tpr, thresholds = roc_curve(y_test, y_proba)
+    auc_score = auc(fpr, tpr)
+
+    fig, ax = plt.subplots()
+    ax.plot(fpr, tpr, label=f'AUC = {auc_score:.2f}')
+    ax.plot([0, 1], [0, 1], 'k--')
+    ax.set_xlabel('False Positive Rate')
+    ax.set_ylabel('True Positive Rate')
+    ax.set_title('ROC Eğrisi')
+    ax.legend(loc='lower right')
+    st.pyplot(fig)
+
+    st.info(f"Modelin AUC skoru: **{auc_score:.2f}**")
+    st.subheader("⚖️ Eşik Değeri - Performans Metrikleri Grafiği")
+
+    thresholds_range = np.arange(0.1, 0.9, 0.05)
+    precisions, recalls, f1s = [], [], []
+
+    for t in thresholds_range:
+        preds = (y_proba >= t).astype(int)
+        precisions.append(precision_score(y_test, preds, zero_division=0))
+        recalls.append(recall_score(y_test, preds, zero_division=0))
+        f1s.append(f1_score(y_test, preds, zero_division=0))
+
+    fig, ax = plt.subplots()
+    ax.plot(thresholds_range, precisions, label='Precision')
+    ax.plot(thresholds_range, recalls, label='Recall')
+    ax.plot(thresholds_range, f1s, label='F1 Score')
+    ax.set_xlabel('Eşik Değeri')
+    ax.set_ylabel('Skor')
+    ax.set_title('Eşik Değerine Göre Performans Metrikleri')
+    ax.legend()
+    st.pyplot(fig)
+    st.subheader("🧾 Model Sonuç Yorumu")
+
+    yorum = ""
+    if auc_score > 0.85 and f1_score(y_test, y_pred) > 0.7:
+        yorum = "Modeliniz genel olarak oldukça başarılı. Artçı şokları ayırt etme kapasitesi yüksek görünüyor."
+    elif auc_score > 0.70:
+        yorum = "Modeliniz iyi performans gösteriyor ancak sınıflar arasındaki dengesizlik nedeniyle artçı şok tahmini geliştirilebilir."
+    else:
+        yorum = "Modelinizin performansı düşük. Özellikle artçı şok sınıfı az olduğu için model bu sınıfı iyi öğrenememiş olabilir."
+
+    st.info(yorum)
+
     st.subheader("🔍 Özellik Önemleri")
     feat_imp = pd.DataFrame({
         'Özellik': features,
