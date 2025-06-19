@@ -121,13 +121,18 @@ def main():
     X_test_scaled = scaler.transform(X_test)
     
  
-    try:
-        ros = RandomOverSampler(random_state=42)
-        X_train_resampled, y_train_resampled = ros.fit_resample(X_train_scaled, y_train)
-        st.info("Veri örnekleme başarıyla uygulandı.")
-    except Exception as e:
-        st.warning(f"Örnekleme hatası: {str(e)} - Örnekleme yapılmadan devam ediliyor...")
-        X_train_resampled, y_train_resampled = X_train_scaled, y_train
+    # Örnekleme işlemi (şimdilik devre dışı bırakıldı)
+    # try:
+    #     ros = RandomOverSampler(random_state=42)
+    #     X_train_resampled, y_train_resampled = ros.fit_resample(X_train_scaled, y_train)
+    #     st.info("Veri örnekleme başarıyla uygulandı.")
+    # except Exception as e:
+    #     st.warning(f"Örnekleme hatası: {str(e)} - Örnekleme yapılmadan devam ediliyor...")
+    #     X_train_resampled, y_train_resampled = X_train_scaled, y_train
+
+    # Geçici çözüm: örnekleme yapılmadan devam
+    X_train_resampled, y_train_resampled = X_train_scaled, y_train
+
     
     st.subheader("🤖 Model Eğitimi")
     with st.spinner('XGBoost modeli eğitiliyor...'):
