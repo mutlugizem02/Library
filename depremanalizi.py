@@ -137,18 +137,14 @@ def main():
     X_test_scaled = scaler.transform(X_test)
     
     
+    from imblearn.over_sampling import RandomOverSampler
+    ros = RandomOverSampler(random_state=42)
     try:
-        
-        from imblearn.over_sampling import RandomOverSampler
-        ros = RandomOverSampler(random_state=42)
-        X_train_resampled, y_train_resampled = ros.fit_resample(X_train, y_train)
-        st.success(f"✅ Örnekleme başarılı! Yeni dağılım: {pd.Series(y_train_resampled).value_counts().to_dict()}")
-    except Exception as e:
-        st.error(f"Örnekleme hatası: {str(e)}")
-        st.warning("Örnekleme yapılmadan devam ediliyor...")
-        X_train_resampled, y_train_resampled = X_train_scaled, y_train
-    
-    
+    X_res, y_res = ros.fit_resample(X, y)
+    except AttributeError:
+    print("Örnekleme hatası: Sürüm uyumsuzluğu - Örnekleme yapılmadan devam ediliyor...")
+    X_res, y_res = X, y
+   
     st.subheader("🤖 Model Eğitimi")
     with st.spinner('XGBoost modeli eğitiliyor...'):
         xgb = XGBClassifier(
